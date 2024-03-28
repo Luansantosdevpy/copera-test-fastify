@@ -35,7 +35,9 @@ export default async (fastify: FastifyInstance): Promise<void> => {
       schemes: ['http'],
       consumes: ['application/json'],
       produces: ['application/json'],
-      paths,
+      paths: {
+        ...paths
+      },
     },
   });
 
