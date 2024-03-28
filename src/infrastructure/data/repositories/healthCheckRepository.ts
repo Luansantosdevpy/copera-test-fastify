@@ -8,7 +8,7 @@ export default class HealthCheckRepository
 {
   constructor() {}
 
-  public async findStatus() {
+  async findStatus(): Promise<string> {
     Logger.debug('healthCheckRepository - findStatus - Mongodb');
     try {
       return 'Ok';

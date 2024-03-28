@@ -1,8 +1,8 @@
-import { container, inject, injectable } from 'tsyringe';
-import HealthCheckService from '../../application/services/healthCheckService';
+import { inject, injectable } from 'tsyringe';
 import Logger from '../../infrastructure/log/logger';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { HttpStatusCode } from 'axios';
+import HealthCheckService from '../../application/services/healthCheckService';
 
 @injectable()
 export default class HealthCheckController {
@@ -10,10 +10,16 @@ export default class HealthCheckController {
     @inject(HealthCheckService)
     public readonly healthCheckService: HealthCheckService
   ) {}
-  public async getStatusAPI(request: FastifyRequest, reply: FastifyReply) {
+
+  public getStatusAPI = async(request: FastifyRequest, reply: FastifyReply) => {
     Logger.debug('healthCheckController - getStatusAPI - healthCheckService');
 
-    const result = await this.healthCheckService.checkStatusAPI();
-    reply.code(HttpStatusCode.Ok).send({ data: result });
+    try {
+      const result = await this.healthCheckService.checkStatusAPI();
+      reply.code(HttpStatusCode.Ok).send({ data: result });
+    } catch (error) {
+      Logger.error('Error occurred while checking API status:', error);
+      reply.code(HttpStatusCode.InternalServerError).send({ error: 'Internal Server Error' });
+    }
   }
 }
