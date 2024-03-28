@@ -1,18 +1,17 @@
-import { Inject, Singleton } from 'typescript-ioc';
+import { injectable } from 'tsyringe';
 import Logger from '../../log/logger';
 import ToDoInterface from '../../../domain/interfaces/models/toDoInterface';
 import ToDoModel from '../../../domain/models/toDo';
 import ToDoRepositoryInterface from '../../../domain/interfaces/repositories/toDoRepositoryInterface';
-import { injectable } from 'tsyringe';
 
 @injectable()
 export default class ToDoRepository implements ToDoRepositoryInterface {
-  async save(body: string): Promise<ToDoInterface> {
+  async save(toDo: Partial<ToDoInterface>): Promise<ToDoInterface> {
     Logger.debug(
-      `ToDoRepository - create - execute [body: ${body}]`
+      `ToDoRepository - create - execute [body: ${toDo}]`
     );
     const newToDo = await ToDoModel.create({
-      body: body,
+      ...toDo,
       completed: false,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -55,6 +54,7 @@ export default class ToDoRepository implements ToDoRepositoryInterface {
       { _id: id },
       {
         completed: completedStatus,
+        completedAt: new Date(),
         updatedAt: new Date(),
       }
     );

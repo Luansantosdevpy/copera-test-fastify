@@ -1,24 +1,36 @@
-import { FastifyInstance } from 'fastify';
+import { DependencyContainer } from 'tsyringe';
 import Logger from './infrastructure/log/logger';
+import ToDoRepositoryInterface from './domain/interfaces/repositories/toDoRepositoryInterface';
 import ToDoRepository from './infrastructure/data/repositories/toDoRepository';
 import ToDoService from './application/services/toDoService';
-import { DependencyContainer } from 'tsyringe';
-import ToDoRepositoryInterface from './domain/interfaces/repositories/toDoRepositoryInterface';
+import HealthCheckRepositoryInterface from './domain/interfaces/repositories/healthCheckRepositoryInterface';
+import HealthCheckRepository from './infrastructure/data/repositories/healthCheckRepository';
+import HealthCheckService from './application/services/healthCheckService';
 
 export default async (container: DependencyContainer): Promise<void> => {
-    Logger.debug('Dependency container initializing...');
+  Logger.debug('Dependency container initializing...');
+
+  container.register<HealthCheckRepositoryInterface>(
+    'HealthCheckRepositoryInterface',
+    {
+      useClass: HealthCheckRepository
+    }
+  );
+
+  container.register<HealthCheckService>('HealthCheckService', {
+    useClass: HealthCheckService
+  });
   
-    container.register<ToDoRepositoryInterface>(
-      'ToDoRepositoryInterface',
-      {
-        useClass: ToDoRepository
-      }
-    );
-  
-    container.register<ToDoService>('ToDoService', {
-      useClass: ToDoService
-    });
-  
-    Logger.debug('Dependency container initialized!');
-  };
-  
+  container.register<ToDoRepositoryInterface>(
+    'ToDoRepositoryInterface',
+    {
+      useClass: ToDoRepository
+    }
+  );
+
+  container.register<ToDoService>('ToDoService', {
+    useClass: ToDoService
+  });
+
+  Logger.debug('Dependency container initialized!');
+};
