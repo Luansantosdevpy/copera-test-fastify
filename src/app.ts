@@ -1,6 +1,5 @@
 import 'reflect-metadata';
-import fastify, { FastifyInstance } from 'fastify';
-// import cors from 'fastify-cors';
+import fastify, { FastifyInstance, FastifyReply } from 'fastify';
 import routes from './api/routes/routes';
 import dbConfig from './infrastructure/data/config/database';
 import mongoose from 'mongoose';
@@ -46,11 +45,15 @@ export default class App {
   }
 
   private async registerMiddlewares(): Promise<void> {
-    // await this.fastify.register(cors, {
-    //   origin: '*',
-    //   methods: ['POST', 'GET', 'PUT', 'OPTIONS', 'PATCH', 'DELETE'],
-    //   exposedHeaders: 'X-file-name'
-    // });
+    this.fastify.register(function corsPlugin(fastify, opts, done) {
+      fastify.addHook('onRequest', (request, reply: FastifyReply, done) => {
+        reply.header('Access-Control-Allow-Origin', '*')
+        reply.header('Access-Control-Allow-Methods', 'POST, GET, PUT, OPTIONS, PATCH, DELETE')
+        reply.header('Access-Control-Expose-Headers', 'X-file-name')
+        done()
+      });
+      done()
+    });
     this.fastify.register(require('fastify-sensible'));
   }
 
