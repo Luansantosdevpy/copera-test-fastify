@@ -21,16 +21,16 @@ export default class App {
 
   public start = (port: number, appName: string): void => {
     this.port = port;
-  
+
     const httpServer = this.fastify.server;
-  
+
     const io = new Server(httpServer, {});
-  
+
     io.on('connection', (socket: Socket) => {
       Logger.info('New client connected');
     });
-  
-    this.fastify.listen({ port: port, host: '0.0.0.0' }, (err) => {
+
+    this.fastify.listen({ port: port, host: '0.0.0.0' }, err => {
       if (err) {
         Logger.error(`Failed to start ${appName}: ${err}`);
         process.exit(1);
@@ -57,12 +57,15 @@ export default class App {
   private async registerMiddlewares(): Promise<void> {
     this.fastify.register(function corsPlugin(fastify, opts, done) {
       fastify.addHook('onRequest', (request, reply: FastifyReply, done) => {
-        reply.header('Access-Control-Allow-Origin', '*')
-        reply.header('Access-Control-Allow-Methods', 'POST, GET, PUT, OPTIONS, PATCH, DELETE')
-        reply.header('Access-Control-Expose-Headers', 'X-file-name')
-        done()
+        reply.header('Access-Control-Allow-Origin', '*');
+        reply.header(
+          'Access-Control-Allow-Methods',
+          'POST, GET, PUT, OPTIONS, PATCH, DELETE'
+        );
+        reply.header('Access-Control-Expose-Headers', 'X-file-name');
+        done();
       });
-      done()
+      done();
     });
     this.fastify.register(require('fastify-sensible'));
   }
@@ -75,4 +78,3 @@ export default class App {
     this.fastify.register(routes);
   }
 }
-

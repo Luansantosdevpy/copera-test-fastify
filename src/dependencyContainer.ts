@@ -21,13 +21,10 @@ export default async (container: DependencyContainer): Promise<void> => {
   container.register<HealthCheckService>('HealthCheckService', {
     useClass: HealthCheckService
   });
-  
-  container.register<ToDoRepositoryInterface>(
-    'ToDoRepositoryInterface',
-    {
-      useClass: ToDoRepository
-    }
-  );
+
+  container.register<ToDoRepositoryInterface>('ToDoRepositoryInterface', {
+    useClass: ToDoRepository
+  });
 
   container.register<ToDoService>('ToDoService', {
     useClass: ToDoService

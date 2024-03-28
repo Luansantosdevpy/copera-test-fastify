@@ -14,26 +14,26 @@ export default {
       ...getHealthCheck
     },
     '/ap1/todo/:id': {
-        ...getOneTaskById,
-        ...deleteOneTasksById
+      ...getOneTaskById,
+      ...deleteOneTasksById
     },
     '/api/todo/update-status/:id': {
-        ...updateOneStatusById
+      ...updateOneStatusById
     },
     '/api/todo/update-description/:id': {
-        ...updateOneDescriptionById
+      ...updateOneDescriptionById
     },
     '/api/todo/complete-in-batch': {
-        ...completeTasksInBatch
+      ...completeTasksInBatch
     },
     '/api/todo/delete-in-batch': {
-        ...deleteTasksInBatch
+      ...deleteTasksInBatch
     },
     '/api/todo/get-count-todo': {
-        ...getCompleteAndIncompleteToDos
+      ...getCompleteAndIncompleteToDos
     },
     '/api/todo': {
-        ...getAllTasks
+      ...getAllTasks
     }
   }
 };
