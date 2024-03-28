@@ -1,6 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { HttpStatusCode } from 'axios';
-// import { validationResult } from 'express-validator';
 import Logger from '../../infrastructure/log/logger';
 import ValidationError from '../../application/exceptions/validationError';
 import NotFoundError from '../../application/exceptions/notFoundError';
@@ -8,52 +7,57 @@ import ToDoInterface from '../../domain/interfaces/models/toDoInterface';
 import ToDoService from '../../application/services/toDoService';
 import { inject, injectable } from 'tsyringe';
 import UnprocessableEntityError from '../../application/exceptions/UnprocessableEntityError';
+import { Server } from 'socket.io';
 
 @injectable()
 export default class ToDoController {
   constructor(
     @inject(ToDoService)
-    public readonly toDoService: ToDoService
+    public readonly toDoService: ToDoService,
+    @inject('socketio')
+    private io: Server 
   ) {}
   
-    public findAll = async (
-      request: FastifyRequest,
-      reply: FastifyReply
-    ): Promise<void> => {
-      try {
-        const page: number = parseInt(request.query as string, 10) || 1;
-        const limit: number = parseInt(request.query as string, 10) || 10;
-  
-        Logger.debug(`ToDoController - findAll - call toDoService.findAll with page: ${page} and limit: ${limit}`);
-  
-        const toDos: ToDoInterface[] | null = await this.toDoService.findAll(page, limit);
-  
-        reply.code(HttpStatusCode.Ok).send({ data: toDos });
-      } catch (error) {
-        Logger.error(`ToDoController - findAll - error: ${error}`);
-        reply.code(HttpStatusCode.InternalServerError).send({ error: 'Internal Server Error.' });
-      }
-    };
+  public findAll = async (
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> => {
+    try {
+      const page: number = parseInt(request.query as string, 10) || 1;
+      const limit: number = parseInt(request.query as string, 10) || 10;
 
-    public create = async (
-        request: FastifyRequest,
-        reply: FastifyReply
-      ): Promise<void> => {
-        try {
-          Logger.debug('ToDoController - create - call toDoService.create');
-          const toDo = await this.toDoService.create(request.body!);
-    
-          reply.code(HttpStatusCode.Ok).send({ data: toDo });
-        } catch (error) {
-          Logger.error(`ToDoController - create - error: ${error}`);
-          if (error instanceof ValidationError) {
-            reply.code(HttpStatusCode.UnprocessableEntity).send({ error: error.message });
-            return;
-          }
-    
-          reply.code(HttpStatusCode.InternalServerError).send({ error: 'Internal Server Error.' });
-        }
-      };
+      Logger.debug(`ToDoController - findAll - call toDoService.findAll with page: ${page} and limit: ${limit}`);
+
+      const toDos: ToDoInterface[] | null = await this.toDoService.findAll(page, limit);
+
+      reply.code(HttpStatusCode.Ok).send({ data: toDos });
+    } catch (error) {
+      Logger.error(`ToDoController - findAll - error: ${error}`);
+      reply.code(HttpStatusCode.InternalServerError).send({ error: 'Internal Server Error.' });
+    }
+  };
+
+  public create = async (
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> => {
+    try {
+      Logger.debug('ToDoController - create - call toDoService.create');
+      const toDo = await this.toDoService.create(request.body!);
+
+      this.io.emit('task_created', toDo);
+
+      reply.code(HttpStatusCode.Ok).send({ data: toDo });
+    } catch (error) {
+      Logger.error(`ToDoController - create - error: ${error}`);
+      if (error instanceof ValidationError) {
+        reply.code(HttpStatusCode.UnprocessableEntity).send({ error: error.message });
+        return;
+      }
+
+      reply.code(HttpStatusCode.InternalServerError).send({ error: 'Internal Server Error.' });
+    }
+  };
 
   public findById = async (
     request: FastifyRequest<{ Params: { id: string } }>,
@@ -89,7 +93,7 @@ export default class ToDoController {
       Logger.debug('ToDoController - update - call toDoService.update');
       await this.toDoService.updateDescription(id, body);
   
-      // this.io.emit('atualizacao-descricao-tarefa', { id, descricao: description });
+      this.io.emit('update_task_description', { id, body: body });
   
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -120,7 +124,7 @@ export default class ToDoController {
       Logger.debug('ToDoController - updateStatus - call toDoService.updateStatus');
       await this.toDoService.updateStatus(id, completed);
   
-      // this.io.emit('atualizacao-status-tarefa', { id, status: completed });
+      this.io.emit('update_task_status', { id, status: completed });
   
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -155,7 +159,7 @@ export default class ToDoController {
       Logger.debug('ToDoController - delete - call toDoService.delete');
       await this.toDoService.delete(id);
   
-      // this.io.emit('deletando-tarefa', { id });
+      this.io.emit('delete-task', { id });
   
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -180,7 +184,7 @@ export default class ToDoController {
       Logger.debug('ToDoController - completeInBatch - call toDoService.completeInBatch');
       await this.toDoService.completeInBatch(ids, completed);
   
-      // this.io.emit('conclusao-tarefas-em-lote', { ids, completed });
+      this.io.emit('complete_tasks_in_batch', { ids, completed });
   
       reply.code(HttpStatusCode.Ok).send();
     } catch (error) {
@@ -203,7 +207,7 @@ export default class ToDoController {
       Logger.debug('ToDoController - deleteInBatch - call toDoService.deleteInBatch');
       await this.toDoService.deleteInBatch(ids);
   
-      // this.io.emit('exclusao-tarefas-em-lote', { ids });
+      this.io.emit('delete_tasks_in_batch', { ids });
   
       reply.code(HttpStatusCode.Ok).send();
     } catch (error) {

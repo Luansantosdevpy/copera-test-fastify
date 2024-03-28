@@ -3,6 +3,7 @@ import fastify, { FastifyInstance, FastifyReply } from 'fastify';
 import routes from './api/routes/routes';
 import dbConfig from './infrastructure/data/config/database';
 import mongoose from 'mongoose';
+import { Server, Socket } from 'socket.io';
 import dependencyContainer from './dependencyContainer';
 import { container } from 'tsyringe';
 import Logger from './infrastructure/log/logger';
@@ -20,6 +21,15 @@ export default class App {
 
   public start = (port: number, appName: string): void => {
     this.port = port;
+  
+    const httpServer = this.fastify.server;
+  
+    const io = new Server(httpServer, {});
+  
+    io.on('connection', (socket: Socket) => {
+      Logger.info('New client connected');
+    });
+  
     this.fastify.listen({ port: port, host: '0.0.0.0' }, (err) => {
       if (err) {
         Logger.error(`Failed to start ${appName}: ${err}`);
