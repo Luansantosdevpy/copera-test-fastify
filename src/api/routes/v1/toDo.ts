@@ -1,10 +1,16 @@
-import { FastifyInstance } from 'fastify';
 import ToDoController from '../../controllers/toDoController';
 import { container } from 'tsyringe';
 import * as validations from '../../../application/validations/toDoSchema';
+import CustomFastifyInstance from '../../../domain/interfaces/infrastructure/ioInterface';
 
-export default async (fastify: FastifyInstance): Promise<void> => {
+export default async (fastify: CustomFastifyInstance): Promise<void> => {
   const toDoController = container.resolve(ToDoController);
+
+  if (fastify.io) {
+    toDoController.setSocketInstance(fastify.io);
+  } else {
+    console.error('Server socket instance is not available');
+  }
 
   fastify.post('/task/create', { schema: validations.createSchema }, toDoController.create);
   fastify.post('/task/complete-in-batch', { schema: validations.completeInBatchSchema }, toDoController.completeInBatch);

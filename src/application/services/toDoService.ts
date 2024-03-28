@@ -3,6 +3,7 @@ import ToDoInterface from '../../domain/interfaces/models/toDoInterface';
 import ToDoRepositoryInterface from '../../domain/interfaces/repositories/toDoRepositoryInterface';
 import { inject, injectable } from 'tsyringe';
 import UnprocessableEntityError from '../exceptions/UnprocessableEntityError';
+import NotFoundError from '../exceptions/notFoundError';
 
 @injectable()
 class ToDoService {
@@ -86,6 +87,15 @@ class ToDoService {
   }
 
   async completeInBatch(ids: string[], completed: boolean): Promise<void> {
+    Logger.debug('ToDoService - completeInBatch - verify if id exists');
+    for (const id of ids) {
+      const todo = await this.toDoRepository.findById(id);
+  
+      if (!todo) {
+        throw new NotFoundError(`To-do with ID ${id} not found.`);
+      }
+    }
+
     Logger.debug(
       'ToDoService - completeInBatch - call toDoRepository.completeInBatch'
     );
@@ -93,6 +103,15 @@ class ToDoService {
   }
 
   async deleteInBatch(ids: string[]): Promise<void> {
+    Logger.debug('ToDoService - deleteInBatch - verify if id exists');
+    for (const id of ids) {
+      const todo = await this.toDoRepository.findById(id);
+  
+      if (!todo) {
+        throw new NotFoundError(`To-do with ID ${id} not found.`);
+      }
+    }
+
     Logger.debug(
       'ToDoService - deleteInBatch - call toDoRepository.deleteInBatch'
     );

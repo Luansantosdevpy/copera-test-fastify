@@ -11,6 +11,7 @@ import Logger from './infrastructure/log/logger';
 export default class App {
   public fastify: FastifyInstance = fastify();
   private port: number;
+  private io: Server | undefined;
 
   public initialize = async (): Promise<void> => {
     await this.connectToMongoDB();
@@ -24,9 +25,13 @@ export default class App {
 
     const httpServer = this.fastify.server;
 
-    const io = new Server(httpServer, {});
+    this.io = new Server(httpServer, {
+      cors: {
+        origin: '*'
+      }
+    });
 
-    io.on('connection', (socket: Socket) => {
+    this.io.on('connection', (socket: Socket) => {
       Logger.info('New client connected');
     });
 
@@ -75,6 +80,6 @@ export default class App {
   }
 
   private async registerRoutes(): Promise<void> {
-    this.fastify.register(routes);
+    this.fastify.register(routes, { io: this.io });
   }
 }

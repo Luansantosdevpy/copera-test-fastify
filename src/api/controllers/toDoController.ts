@@ -18,6 +18,10 @@ export default class ToDoController {
     private io: Server
   ) {}
 
+  public setSocketInstance(io: Server): void {
+    this.io = io;
+  }
+
   public findAll = async (
     request: FastifyRequest,
     reply: FastifyReply
@@ -52,7 +56,9 @@ export default class ToDoController {
       Logger.debug('ToDoController - create - call toDoService.create');
       const toDo = await this.toDoService.create(request.body!);
 
-      this.io.emit('task_created', toDo);
+      this.io.on("connection", (socket) => {
+        socket.emit('task_created', toDo);
+      });
 
       reply.code(HttpStatusCode.Ok).send({ data: toDo });
     } catch (error) {
@@ -216,7 +222,9 @@ export default class ToDoController {
       );
       await this.toDoService.completeInBatch(ids, completed);
 
-      this.io.emit('complete_tasks_in_batch', { ids, completed });
+      this.io.on("connection", (socket) => {
+        socket.emit('complete_tasks_in_batch', { ids, completed });
+      });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
