@@ -72,6 +72,107 @@ Esta estrutura promove a separação clara das camadas, tornando o projeto escal
 - Deleção em massa das tarefas
 - Deleção de apenas uma tarefa pelo ID
 
+
+## Rodando os testes
+
+Para rodar os testes, rode o seguinte comando
+
+```bash
+  npm run test
+```
+
+
+## Documentação da API
+
+#### Retorna todos os itens
+
+```http
+  GET /api/tasks
+```
+
+#### Retorna um item
+
+```http
+  GET /api/task/${id}
+```
+
+| Parâmetro   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `id`      | `string` | **Obrigatório**. O ID do item que você quer |
+
+
+```http
+  POST /api/task/create
+```
+
+| Body   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `body`      | `string` | **Obrigatório**. A descrição da tarefa a ser criada |
+
+```http
+  PUT /api/task/update-status/${id}
+```
+
+| Parâmetro   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `id`      | `string` | **Obrigatório**. ID do item a ser atualizado |
+| Body   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `completed`      | `boolean` | **Obrigatório**. Status da tarefa a ser editado |
+
+```http
+  PUT /api/task/update-description/${id}
+```
+
+| Parâmetro   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `id`      | `string` | **Obrigatório**. ID do item a ser atualizado |
+| Body   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `body`      | `string` | **Obrigatório**. Nova descrição |
+
+
+```http
+  POST /api/task/complete-in-batch
+```
+
+| Body   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `ids`      | `array` | **Obrigatório**. Ids das tarefas a serem completadas|
+| `completed` | `boolean` | **Obrigatório**. Novo status das tarefas
+
+
+```http
+  DELETE /api/task/delete-in-batch
+```
+
+| Body   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `ids`      | `array` | **Obrigatório**. Ids das tarefas a serem deletadas|
+
+```http
+  DELETE /api/task/${id}
+```
+
+| Parâmetro   | Tipo       | Descrição                                   |
+| :---------- | :--------- | :------------------------------------------ |
+| `id`      | `string` | **Obrigatório**. ID do item a ser deletado |
+
+
+## A melhorar
+
+- Documentação do swagger está funcionando apenas a rota /doc/json, por algum motivo não funciona a exibição das rotas.
+
+- Acredito que algumas outas regras agregariam muito ao projeto
+
+- Criar testes de integração.
+
+- Criar um front mais robusto para testar a interação com o socket.io.
+
+## Collection
+
+- Dentro do diretório collection, na raiz do projeto, é possível adquirir a collection do projeto, com todas as rotas para rodar em um cliente HTTP como o insomnia.
+
 ## Autor
 
 Luan Santos
