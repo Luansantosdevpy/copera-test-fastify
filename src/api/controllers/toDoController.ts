@@ -1,4 +1,3 @@
-import { Singleton } from 'typescript-ioc';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { HttpStatusCode } from 'axios';
 // import { validationResult } from 'express-validator';
@@ -7,13 +6,15 @@ import ValidationError from '../../application/exceptions/validationError';
 import NotFoundError from '../../application/exceptions/notFoundError';
 import ToDoInterface from '../../domain/interfaces/models/toDoInterface';
 import ToDoService from '../../application/services/toDoService';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
+import UnprocessableEntityError from '../../application/exceptions/UnprocessableEntityError';
 
 @injectable()
 export default class ToDoController {
-    constructor(
-      private readonly toDoService: ToDoService
-    ) {}
+  constructor(
+    @inject(ToDoService)
+    public readonly toDoService: ToDoService
+  ) {}
   
     public findAll = async (
       request: FastifyRequest,
@@ -38,11 +39,9 @@ export default class ToDoController {
         request: FastifyRequest,
         reply: FastifyReply
       ): Promise<void> => {
-        try {    
-          const body: any = request.body;
-    
+        try {
           Logger.debug('ToDoController - create - call toDoService.create');
-          const toDo = await this.toDoService.create(body);
+          const toDo = await this.toDoService.create(request.body!);
     
           reply.code(HttpStatusCode.Ok).send({ data: toDo });
         } catch (error) {
@@ -80,15 +79,15 @@ export default class ToDoController {
   };
 
   public updateDescription = async (
-    request: FastifyRequest<{ Params: { id: string }, Body: { description: string } }>,
+    request: FastifyRequest<{ Params: { id: string }, Body: { body: string } }>,
     reply: FastifyReply
   ): Promise<void> => {
     try {
       const { id } = request.params;
-      const { description } = request.body;
+      const { body } = request.body;
   
       Logger.debug('ToDoController - update - call toDoService.update');
-      await this.toDoService.updateDescription(id, description);
+      await this.toDoService.updateDescription(id, body);
   
       // this.io.emit('atualizacao-descricao-tarefa', { id, descricao: description });
   
@@ -129,6 +128,11 @@ export default class ToDoController {
   
       if (error instanceof NotFoundError) {
         reply.code(HttpStatusCode.NotFound).send({ error: error.message });
+        return;
+      }
+
+      if (error instanceof UnprocessableEntityError) {
+        reply.code(HttpStatusCode.UnprocessableEntity).send({ error: error.message });
         return;
       }
   

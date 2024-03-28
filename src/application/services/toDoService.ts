@@ -2,19 +2,19 @@ import { Inject, Singleton } from 'typescript-ioc';
 import Logger from '../../infrastructure/log/logger';
 import ToDoInterface from '../../domain/interfaces/models/toDoInterface';
 import ToDoRepositoryInterface from '../../domain/interfaces/repositories/toDoRepositoryInterface';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
+import UnprocessableEntityError from '../exceptions/UnprocessableEntityError';
 
 @injectable()
 class ToDoService {
-  private readonly toDoRepository: ToDoRepositoryInterface;
+  constructor(
+    @inject('ToDoRepositoryInterface')
+    public readonly toDoRepository: ToDoRepositoryInterface
+  ) {}
 
-  constructor(toDoRepository: ToDoRepositoryInterface) {
-    this.toDoRepository = toDoRepository;
-  }
-
-  async create(body: string): Promise<ToDoInterface> {
+  async create(toDo: Partial<ToDoInterface>): Promise<ToDoInterface> {
     Logger.debug('ToDoService - create - call toDoRepository.save');
-    return this.toDoRepository.save(body);
+    return this.toDoRepository.save(toDo);
   }
 
   findAll(page: number = 1, limit: number = 10): Promise<ToDoInterface[] | null> {
@@ -24,16 +24,36 @@ class ToDoService {
 
   async updateDescription(id: string, body: string): Promise<void> {
     Logger.debug('ToDoService - update - call ToDoService.find');
-    await this.findById(id);
-
+    const task = await this.findById(id);
+  
+    if (!task) {
+      throw new UnprocessableEntityError('Task not found');
+    }
+  
+    if (task.completed) {
+      throw new UnprocessableEntityError('Cannot update description of a completed task');
+    }
+  
     Logger.debug('ToDoService - update - call toDoRepository.updateDescription');
     await this.toDoRepository.updateDescription(id, body);
   }
 
   async updateStatus(id: string, completedStatus: boolean): Promise<void> {
     Logger.debug('ToDoService - updateStatus - call ToDoService.findById');
-    await this.findById(id);
-
+    const task = await this.findById(id);
+  
+    if (!task) {
+      throw new UnprocessableEntityError('Task not found');
+    }
+  
+    if (task.completed === completedStatus) {
+      throw new UnprocessableEntityError('This already the status to the task');
+    }
+  
+    if (completedStatus && task.completed) {
+      throw new UnprocessableEntityError('Task is already completed');
+    }
+  
     Logger.debug('ToDoService - updateStatus - call toDoRepository.updateStatus');
     await this.toDoRepository.updateStatus(id, completedStatus);
   }
@@ -45,8 +65,12 @@ class ToDoService {
 
   async delete(id: string): Promise<void> {
     Logger.debug('ToDoService - delete - call toDoRepository.findById');
-    await this.findById(id);
-
+    const task = await this.findById(id);
+  
+    if (!task) {
+      throw new UnprocessableEntityError('Task not found');
+    }
+  
     Logger.debug('ToDoService - delete - call toDoRepository.delete');
     await this.toDoRepository.delete(id);
   }

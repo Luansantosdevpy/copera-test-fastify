@@ -1,7 +1,7 @@
 import ToDoInterface from "../models/toDoInterface";
 
 export default interface ToDoRepositoryInterface {
-  save(body: string): Promise<ToDoInterface>;
+  save(toDo: Partial<ToDoInterface>): Promise<ToDoInterface>;
   findAll(page: number, limit: number): Promise<ToDoInterface[] | null>;
   findById(id: string): Promise<ToDoInterface | null>;
   delete(id: string): Promise<void>;
