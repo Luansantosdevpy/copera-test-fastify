@@ -1,4 +1,4 @@
-import ToDoInterface from "../models/toDoInterface";
+import ToDoInterface from '../models/toDoInterface';
 
 export default interface ToDoRepositoryInterface {
   save(toDo: Partial<ToDoInterface>): Promise<ToDoInterface>;
