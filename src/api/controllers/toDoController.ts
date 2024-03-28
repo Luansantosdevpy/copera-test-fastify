@@ -218,7 +218,7 @@ export default class ToDoController {
 
       this.io.emit('complete_tasks_in_batch', { ids, completed });
 
-      reply.code(HttpStatusCode.Ok).send();
+      reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
       Logger.error(`ToDoController - completeInBatch - error: ${error}`);
       if (error instanceof ValidationError) {
@@ -247,7 +247,7 @@ export default class ToDoController {
 
       this.io.emit('delete_tasks_in_batch', { ids });
 
-      reply.code(HttpStatusCode.Ok).send();
+      reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
       Logger.error(`ToDoController - deleteInBatch - error: ${error}`);
       if (error instanceof ValidationError) {

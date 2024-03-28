@@ -1,21 +1,22 @@
 import { inject, injectable } from 'tsyringe';
 import HealthCheckRepositoryInterface from '../../domain/interfaces/repositories/healthCheckRepositoryInterface';
 import Logger from '../../infrastructure/log/logger';
+import CheckStatusApi from '../../domain/interfaces/outputInterfaces/checkStatusInterface';
 
 @injectable()
-export default class HealthCheckService {
+class HealthCheckService {
   constructor(
     @inject('HealthCheckRepositoryInterface')
     private readonly postgresHealthCheckRepository: HealthCheckRepositoryInterface
   ) {}
 
-  async checkStatusAPI(): Promise<any> {
+  async checkStatusAPI(): Promise<CheckStatusApi> {
     Logger.debug(
       'healthCheckService - checkStatusAPI - postgresHealthCheckRepository'
     );
-    const postgresCheck = await this.postgresHealthCheckRepository.findStatus();
+    const mongoCheck = await this.postgresHealthCheckRepository.findStatus();
 
-    const healthcheck = {
+    const healthcheck: CheckStatusApi = {
       name: 'Copera ai',
       status: 'OK',
       uptime: process.uptime(),
@@ -23,7 +24,7 @@ export default class HealthCheckService {
       checks: [
         {
           name: 'Database',
-          status: postgresCheck
+          status: mongoCheck
         }
       ]
     };
@@ -31,3 +32,5 @@ export default class HealthCheckService {
     return healthcheck;
   }
 }
+
+export default HealthCheckService;
