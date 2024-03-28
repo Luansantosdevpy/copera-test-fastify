@@ -1,4 +1,3 @@
-import { Inject, Singleton } from 'typescript-ioc';
 import Logger from '../../infrastructure/log/logger';
 import ToDoInterface from '../../domain/interfaces/models/toDoInterface';
 import ToDoRepositoryInterface from '../../domain/interfaces/repositories/toDoRepositoryInterface';
