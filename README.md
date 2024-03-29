@@ -84,13 +84,13 @@ Para rodar os testes, rode o seguinte comando
 
 ## Documentação da API
 
-#### Retorna todos os itens
+#### Retorna todas as tarefas
 
 ```http
   GET /api/tasks
 ```
 
-#### Retorna um item
+#### Retorna uma tarefa
 
 ```http
   GET /api/task/${id}
@@ -101,6 +101,8 @@ Para rodar os testes, rode o seguinte comando
 | `id`      | `string` | **Obrigatório**. O ID do item que você quer |
 
 
+#### Cria uma tarefa a partir da descrição
+
 ```http
   POST /api/task/create
 ```
@@ -108,6 +110,8 @@ Para rodar os testes, rode o seguinte comando
 | Body   | Tipo       | Descrição                                   |
 | :---------- | :--------- | :------------------------------------------ |
 | `body`      | `string` | **Obrigatório**. A descrição da tarefa a ser criada |
+
+#### Atualiza o status de uma tarefa a partir do id
 
 ```http
   PUT /api/task/update-status/${id}
@@ -119,6 +123,8 @@ Para rodar os testes, rode o seguinte comando
 | Body   | Tipo       | Descrição                                   |
 | :---------- | :--------- | :------------------------------------------ |
 | `completed`      | `boolean` | **Obrigatório**. Status da tarefa a ser editado |
+
+#### Atualiza a descrição de uma tarefa a partir do id
 
 ```http
   PUT /api/task/update-description/${id}
@@ -132,6 +138,8 @@ Para rodar os testes, rode o seguinte comando
 | `body`      | `string` | **Obrigatório**. Nova descrição |
 
 
+#### Completa tarefas em lote pelos ids delas
+
 ```http
   POST /api/task/complete-in-batch
 ```
@@ -141,6 +149,7 @@ Para rodar os testes, rode o seguinte comando
 | `ids`      | `array` | **Obrigatório**. Ids das tarefas a serem completadas|
 | `completed` | `boolean` | **Obrigatório**. Novo status das tarefas
 
+#### Deleta tarefas em lote pelos ids delas
 
 ```http
   DELETE /api/task/delete-in-batch
@@ -149,6 +158,8 @@ Para rodar os testes, rode o seguinte comando
 | Body   | Tipo       | Descrição                                   |
 | :---------- | :--------- | :------------------------------------------ |
 | `ids`      | `array` | **Obrigatório**. Ids das tarefas a serem deletadas|
+
+#### Deleta uma tarefa especifica pelo ID
 
 ```http
   DELETE /api/task/${id}
