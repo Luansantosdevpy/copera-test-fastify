@@ -7,6 +7,7 @@ Este é um projeto cujo objetivo principal é dar autonomia para controlar taref
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [Make](https://askubuntu.com/questions/161104/how-do-i-install-make)
+- Yarn (Necessário para rodar a aplicação localmente)
 
 ## Configuração
 
@@ -72,7 +73,6 @@ Esta estrutura promove a separação clara das camadas, tornando o projeto escal
 - Deleção em massa das tarefas
 - Deleção de apenas uma tarefa pelo ID
 
-
 ## Rodando os testes
 
 Para rodar os testes, rode o seguinte comando
@@ -80,7 +80,6 @@ Para rodar os testes, rode o seguinte comando
 ```bash
   npm run test
 ```
-
 
 ## Documentação da API
 
@@ -174,11 +173,7 @@ Para rodar os testes, rode o seguinte comando
 
 - Documentação do swagger está funcionando apenas a rota /doc/json, por algum motivo não funciona a exibição das rotas.
 
-- Acredito que algumas outas regras agregariam muito ao projeto
-
 - Criar testes de integração.
-
-- Criar um front mais robusto para testar a interação com o socket.io.
 
 ## Collection
 
