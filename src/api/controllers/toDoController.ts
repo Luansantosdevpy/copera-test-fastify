@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyRequest, FastifyReply, RouteGenericInterface, RawServerDefault, FastifySchema, FastifyTypeProviderDefault, FastifyBaseLogger } from 'fastify';
 import { HttpStatusCode } from 'axios';
 import Logger from '../../infrastructure/log/logger';
 import ValidationError from '../../application/exceptions/validationError';
@@ -13,14 +13,8 @@ import { Server } from 'socket.io';
 export default class ToDoController {
   constructor(
     @inject(ToDoService)
-    public readonly toDoService: ToDoService,
-    @inject('socketio')
-    private io: Server
+    public readonly toDoService: ToDoService
   ) {}
-
-  public setSocketInstance(io: Server): void {
-    this.io = io;
-  }
 
   public findAll = async (
     request: FastifyRequest,
@@ -50,17 +44,20 @@ export default class ToDoController {
 
   public create = async (
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
       Logger.debug('ToDoController - create - call toDoService.create');
       const toDo = await this.toDoService.create(request.body!);
 
-      this.io.on("connection", (socket) => {
-        socket.emit('task_created', toDo);
-      });
+      if (io) {
+        Logger.info('Enviando evento');
+        io.emit('task_created', toDo);
+        Logger.info('Evento enviado com sucesso!');
+      }
 
-      reply.code(HttpStatusCode.Ok).send({ data: toDo });
+      reply.code(HttpStatusCode.Created).send({ data: toDo });
     } catch (error) {
       Logger.error(`ToDoController - create - error: ${error}`);
       if (error instanceof ValidationError) {
@@ -77,11 +74,11 @@ export default class ToDoController {
   };
 
   public findById = async (
-    request: FastifyRequest<{ Params: { id: string } }>,
+    request: FastifyRequest,
     reply: FastifyReply
   ): Promise<void> => {
     try {
-      const { id } = request.params;
+      const { id } = request.params as { id: string };
 
       Logger.debug('ToDoController - find - call toDoService.find');
       const toDo = await this.toDoService.findById(id);
@@ -102,17 +99,18 @@ export default class ToDoController {
   };
 
   public updateDescription = async (
-    request: FastifyRequest<{ Params: { id: string }; Body: { body: string } }>,
-    reply: FastifyReply
+    request: FastifyRequest,
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
-      const { id } = request.params;
-      const { body } = request.body;
+      const { id } = request.params as { id: string };
+      const { body } = request.body as { body: string };
 
       Logger.debug('ToDoController - update - call toDoService.update');
       await this.toDoService.updateDescription(id, body);
 
-      this.io.emit('update_task_description', { id, body: body });
+      io.emit('update_task_description', { id, body: body });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -137,22 +135,20 @@ export default class ToDoController {
   };
 
   public updateStatus = async (
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: { completed: boolean };
-    }>,
-    reply: FastifyReply
+    request: FastifyRequest,
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
-      const { id } = request.params;
-      const { completed } = request.body;
+      const { id } = request.params as { id: string };
+      const { completed } = request.body as { completed: boolean };
 
       Logger.debug(
         'ToDoController - updateStatus - call toDoService.updateStatus'
       );
       await this.toDoService.updateStatus(id, completed);
 
-      this.io.emit('update_task_status', { id, status: completed });
+      io.emit('update_task_status', { id, status: completed });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -184,16 +180,17 @@ export default class ToDoController {
   };
 
   public delete = async (
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
+    request: FastifyRequest,
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
-      const { id } = request.params;
+      const { id } = request.params as { id: string };
 
       Logger.debug('ToDoController - delete - call toDoService.delete');
       await this.toDoService.delete(id);
 
-      this.io.emit('delete-task', { id });
+      io.emit('delete-task', { id });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -211,20 +208,19 @@ export default class ToDoController {
   };
 
   public completeInBatch = async (
-    request: FastifyRequest<{ Body: { ids: string[]; completed: boolean } }>,
-    reply: FastifyReply
+    request: FastifyRequest,
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
-      const { ids, completed } = request.body;
+      const { ids, completed } = request.body as { ids: string[]; completed: boolean };
 
       Logger.debug(
         'ToDoController - completeInBatch - call toDoService.completeInBatch'
       );
       await this.toDoService.completeInBatch(ids, completed);
 
-      this.io.on("connection", (socket) => {
-        socket.emit('complete_tasks_in_batch', { ids, completed });
-      });
+      io.emit('complete_tasks_in_batch', { ids, completed });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
@@ -242,18 +238,19 @@ export default class ToDoController {
   };
 
   public deleteInBatch = async (
-    request: FastifyRequest<{ Body: { ids: string[] } }>,
-    reply: FastifyReply
+    request: FastifyRequest,
+    reply: FastifyReply,
+    io: Server
   ): Promise<void> => {
     try {
-      const { ids } = request.body;
+      const { ids } = request.body as { ids: string[]};
 
       Logger.debug(
         'ToDoController - deleteInBatch - call toDoService.deleteInBatch'
       );
       await this.toDoService.deleteInBatch(ids);
 
-      this.io.emit('delete_tasks_in_batch', { ids });
+      io.emit('delete_tasks_in_batch', { ids });
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
