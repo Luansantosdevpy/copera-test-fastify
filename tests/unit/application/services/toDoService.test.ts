@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from 'mongodb';
 import toDoRepositoryMock from '../../../mocks/toDoRepositoryMock';
 import ToDoService from '../../../../src/application/services/toDoService';
 import Logger from '../../../../src/infrastructure/log/logger';
@@ -6,6 +7,7 @@ import ToDoRepositoryInterface from '../../../../src/domain/interfaces/repositor
 import ToDoInterface from '../../../../src/domain/interfaces/models/toDoInterface';
 import ToDo from '../../../../src/domain/models/toDo';
 import UnprocessableEntityError from '../../../../src/application/exceptions/UnprocessableEntityError';
+import NotFoundError from '../../../../src/application/exceptions/notFoundError';
 
 describe('ToDoService Testing', () => {
   let toDoService: ToDoService;
@@ -162,19 +164,40 @@ describe('ToDoService Testing', () => {
   });
 
   it('should complete tasks in batch', async () => {
-    const ids = [uuidv4(), uuidv4(), uuidv4()];
+    const existingTasks: ToDoInterface[] = [
+      { _id: new ObjectId(), body: 'Task 1', completed: false } as ToDoInterface,
+      { _id: new ObjectId(), body: 'Task 2', completed: false } as ToDoInterface,
+      { _id: new ObjectId(), body: 'Task 3', completed: false } as ToDoInterface
+    ];
+  
+    jest.spyOn(toDoRepository, 'findById')
+      .mockImplementation(async (id: string) => {
+        return existingTasks.find(task => task._id.toHexString() === id) || null;
+      });
+  
+    const ids = existingTasks.map(task => task._id.toHexString());
     const completed = true;
-
+  
     jest.spyOn(toDoRepository, 'completeInBatch').mockResolvedValueOnce();
-
+  
     await toDoService.completeInBatch(ids, completed);
-
+  
     expect(toDoRepository.completeInBatch).toHaveBeenCalledTimes(1);
     expect(toDoRepository.completeInBatch).toHaveBeenCalledWith(ids, completed);
   });
-
   it('should delete tasks in batch', async () => {
-    const ids = [uuidv4(), uuidv4(), uuidv4()];
+    const existingTasks: ToDoInterface[] = [
+      { _id: new ObjectId(), body: 'Task 1', completed: false } as ToDoInterface,
+      { _id: new ObjectId(), body: 'Task 2', completed: false } as ToDoInterface,
+      { _id: new ObjectId(), body: 'Task 3', completed: false } as ToDoInterface
+    ];
+  
+    jest.spyOn(toDoRepository, 'findById')
+      .mockImplementation(async (id: string) => {
+        return existingTasks.find(task => task._id.toHexString() === id) || null;
+      });
+  
+    const ids = existingTasks.map(task => task._id.toHexString());
 
     jest.spyOn(toDoRepository, 'deleteInBatch').mockResolvedValueOnce();
 
@@ -182,7 +205,8 @@ describe('ToDoService Testing', () => {
 
     expect(toDoRepository.deleteInBatch).toHaveBeenCalledTimes(1);
     expect(toDoRepository.deleteInBatch).toHaveBeenCalledWith(ids);
-  });
+});
+
 
   it('should get total count of pending and completed tasks', async () => {
     const mockCounts = {
@@ -204,7 +228,7 @@ describe('ToDoService Testing', () => {
     const nonExistentId = uuidv4();
     jest.spyOn(toDoService, 'findById').mockResolvedValueOnce(null);
   
-    await expect(toDoService.updateStatus(nonExistentId, true)).rejects.toThrow(UnprocessableEntityError);
+    await expect(toDoService.updateStatus(nonExistentId, true)).rejects.toThrow(NotFoundError);
   
     expect(toDoService.findById).toHaveBeenCalledTimes(1);
     expect(toDoRepository.updateStatus).not.toHaveBeenCalled();
@@ -214,7 +238,7 @@ describe('ToDoService Testing', () => {
     const nonExistentId = uuidv4();
     jest.spyOn(toDoService, 'findById').mockResolvedValueOnce(null);
   
-    await expect(toDoService.delete(nonExistentId)).rejects.toThrow(UnprocessableEntityError);
+    await expect(toDoService.delete(nonExistentId)).rejects.toThrow(NotFoundError);
   
     expect(toDoService.findById).toHaveBeenCalledTimes(1);
     expect(toDoRepository.delete).not.toHaveBeenCalled();
@@ -235,14 +259,14 @@ describe('ToDoService Testing', () => {
   
     jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
   
-    await expect(toDoService.updateDescription(nonExistentId, newDescription)).rejects.toThrow(UnprocessableEntityError);
+    await expect(toDoService.updateDescription(nonExistentId, newDescription)).rejects.toThrow(NotFoundError);
   
     expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
     expect(toDoRepository.updateDescription).not.toHaveBeenCalled();
   });
   
   it('should delete task when it is completed', async () => {
-    const taskId = uuidv4();
+    const taskId = 'completed_task_id';
     const completedTask: Partial<ToDoInterface> = {
       id: taskId,
       body: 'Completed task',
@@ -254,11 +278,10 @@ describe('ToDoService Testing', () => {
     jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(Promise.resolve(completedTask as ToDoInterface));
     jest.spyOn(toDoRepository, 'delete').mockResolvedValueOnce();
   
-    await expect(toDoService.delete(taskId)).resolves.toBeUndefined();
+    await expect(toDoService.delete(taskId)).rejects.toThrow(UnprocessableEntityError);
   
     expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
-    expect(toDoRepository.delete).toHaveBeenCalledTimes(1);
-    expect(toDoRepository.delete).toHaveBeenCalledWith(taskId);
+    expect(toDoRepository.delete).toHaveBeenCalledTimes(0);
   });
   
   it('should throw error when trying to update description of completed task', async () => {
@@ -277,5 +300,123 @@ describe('ToDoService Testing', () => {
   
     expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
     expect(toDoRepository.updateDescription).not.toHaveBeenCalled();
+  });
+  
+  
+  it('should throw error when trying to update description with invalid task ID', async () => {
+    const invalidId = 'invalid_id';
+    const newDescription = 'New description';
+  
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+  
+    await expect(toDoService.updateDescription(invalidId, newDescription)).rejects.toThrow(NotFoundError);
+  
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateDescription).not.toHaveBeenCalled();
+  });
+  
+  it('should throw error when trying to update status with invalid task ID', async () => {
+    const invalidId = 'invalid_id';
+  
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+  
+    await expect(toDoService.updateStatus(invalidId, true)).rejects.toThrow(NotFoundError);
+  
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateStatus).not.toHaveBeenCalled();
+  });
+  
+  it('should throw error when trying to delete non-existent task', async () => {
+    const nonExistentId = 'non_existent_id';
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+  
+    await expect(toDoService.delete(nonExistentId)).rejects.toThrow(NotFoundError);
+  
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.delete).not.toHaveBeenCalled();
+  });  
+  
+  it('should throw error when trying to delete completed task', async () => {
+    const completedTaskId = 'completed_task_id';
+    const completedTask: Partial<ToDoInterface> = {
+      id: completedTaskId,
+      body: 'Completed task',
+      completed: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(Promise.resolve(completedTask as ToDoInterface));
+    
+    await expect(toDoService.delete(completedTaskId)).rejects.toThrow(UnprocessableEntityError);
+    
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundError when trying to update description of non-existent task', async () => {
+    const nonExistentId = uuidv4();
+    const newDescription = 'New description';
+
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+
+    await expect(toDoService.updateDescription(nonExistentId, newDescription)).rejects.toThrow(NotFoundError);
+
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateDescription).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundError when trying to update status of non-existent task', async () => {
+    const nonExistentId = uuidv4();
+    const newStatus = false
+
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+
+    await expect(toDoService.updateStatus(nonExistentId, newStatus)).rejects.toThrow(NotFoundError);
+    
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateStatus).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundError when trying to delete of non-existent task', async () => {
+    const nonExistentId = uuidv4();
+
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(null);
+
+    await expect(toDoService.delete(nonExistentId)).rejects.toThrow(NotFoundError);
+    
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateStatus).not.toHaveBeenCalled();
+  });
+
+  it('should throw UnprocessableEntityError when trying to update description of completed task', async () => {
+    const completedTaskId = uuidv4();
+    const completedTask: Partial<ToDoInterface> = {
+      id: completedTaskId,
+      body: 'Completed task',
+      completed: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce(Promise.resolve(completedTask as ToDoInterface));
+
+    await expect(toDoService.updateDescription(completedTaskId, 'Updated description')).rejects.toThrow(UnprocessableEntityError);
+
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateDescription).not.toHaveBeenCalled();
+  });
+
+  it('should throw error when repository throws error while updating description', async () => {
+    const taskId = uuidv4();
+    const newDescription = 'New description';
+
+    jest.spyOn(toDoRepository, 'findById').mockResolvedValueOnce({} as ToDoInterface);
+    jest.spyOn(toDoRepository, 'updateDescription').mockRejectedValueOnce(new Error('Database error'));
+
+    await expect(toDoService.updateDescription(taskId, newDescription)).rejects.toThrow(Error);
+
+    expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.updateDescription).toHaveBeenCalledTimes(1);
   });
 });

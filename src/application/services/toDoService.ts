@@ -32,7 +32,7 @@ class ToDoService {
     const task = await this.findById(id);
 
     if (!task) {
-      throw new UnprocessableEntityError('Task not found');
+      throw new NotFoundError('Task not found');
     }
 
     if (task.completed) {
@@ -52,7 +52,7 @@ class ToDoService {
     const task = await this.findById(id);
 
     if (!task) {
-      throw new UnprocessableEntityError('Task not found');
+      throw new NotFoundError('Task not found');
     }
 
     if (task.completed === completedStatus) {
@@ -71,20 +71,31 @@ class ToDoService {
 
   findById(id: string): Promise<ToDoInterface | null> {
     Logger.debug('ToDoService - findById - call toDoRepository.findById');
-    return this.toDoRepository.findById(id);
+    const task = this.toDoRepository.findById(id);
+
+    if (!task) {
+      throw new NotFoundError('Task not found');
+    }
+
+    return task;
   }
 
   async delete(id: string): Promise<void> {
     Logger.debug('ToDoService - delete - call toDoRepository.findById');
     const task = await this.findById(id);
-
+  
     if (!task) {
-      throw new UnprocessableEntityError('Task not found');
+      throw new NotFoundError('Task not found');
     }
-
+  
+    if (task.completed) {
+      throw new UnprocessableEntityError('Cannot delete a completed task');
+    }
+  
     Logger.debug('ToDoService - delete - call toDoRepository.delete');
     await this.toDoRepository.delete(id);
   }
+  
 
   async completeInBatch(ids: string[], completed: boolean): Promise<void> {
     Logger.debug('ToDoService - completeInBatch - verify if id exists');
