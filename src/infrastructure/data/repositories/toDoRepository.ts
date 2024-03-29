@@ -27,8 +27,7 @@ export default class ToDoRepository implements ToDoRepositoryInterface {
     return ToDoModel.find()
       .sort({ name: 1 })
       .skip((page - 1) * limit)
-      .limit(limit)
-      .exec();
+      .limit(limit);
   }
 
   async delete(id: string): Promise<void> {
@@ -61,7 +60,7 @@ export default class ToDoRepository implements ToDoRepositoryInterface {
 
   async findById(id: string): Promise<ToDoInterface | null> {
     Logger.debug(`ToDoRepository - findById - execute [id: ${id}]`);
-    return await ToDoModel.findById({ _id: id }).exec();
+    return await ToDoModel.findById({ _id: id });
   }
 
   async completeInBatch(ids: string[], completed: boolean): Promise<void> {
