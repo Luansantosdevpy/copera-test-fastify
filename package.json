@@ -7,7 +7,8 @@
     "build": "tsc",
     "dev": "yarn ts-node-dev --clear --inspect --transpile-only --ignore node_modules -r dotenv/config src/server.ts service:",
     "test": "cross-env NODE_ENV=test jest --passWithNoTests --runInBand",
-    "test:unit": "jest --silent --maxWorkers=2 ./tests/unit/*"
+    "test:unit": "jest --silent --maxWorkers=2 ./tests/unit/*",
+    "coverage": "istanbul cover jest"
   },
   "repository": {
     "type": "git",
@@ -47,6 +48,7 @@
     "eslint": "^8.57.0",
     "fastify-cors": "^6.1.0",
     "fastify-swagger": "^5.2.0",
+    "istanbul": "^0.4.5",
     "jest": "^29.7.0",
     "prettier": "^3.2.5",
     "swagger-jsdoc": "^6.2.8",

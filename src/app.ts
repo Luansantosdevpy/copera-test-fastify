@@ -8,6 +8,12 @@ import dependencyContainer from './dependencyContainer';
 import { container } from 'tsyringe';
 import Logger from './infrastructure/log/logger';
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    io: Server;
+  }
+}
+
 export default class App {
   public fastify: FastifyInstance = fastify();
   private port: number;
@@ -18,22 +24,11 @@ export default class App {
     await this.registerMiddlewares();
     await this.dependencyContainer();
     await this.registerRoutes();
+    this.initializeSocket();
   };
 
   public start = (port: number, appName: string): void => {
     this.port = port;
-
-    const httpServer = this.fastify.server;
-
-    this.io = new Server(httpServer, {
-      cors: {
-        origin: '*'
-      }
-    });
-
-    this.io.on('connection', (socket: Socket) => {
-      Logger.info('New client connected');
-    });
 
     this.fastify.listen({ port: port, host: '0.0.0.0' }, err => {
       if (err) {
@@ -80,6 +75,22 @@ export default class App {
   }
 
   private async registerRoutes(): Promise<void> {
-    this.fastify.register(routes, { io: this.io });
+    this.fastify.register(routes);
+  }
+
+  private initializeSocket(): void {
+    const httpServer = this.fastify.server;
+
+    this.io = new Server(httpServer, {
+      cors: {
+        origin: '*'
+      }
+    });
+
+    this.io.on('connection', (socket: Socket) => {
+      Logger.info('New client connected');
+    });
+
+    this.fastify.decorate('io', this.io);
   }
 }
