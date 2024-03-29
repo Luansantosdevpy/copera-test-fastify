@@ -419,4 +419,39 @@ describe('ToDoService Testing', () => {
     expect(toDoRepository.findById).toHaveBeenCalledTimes(1);
     expect(toDoRepository.updateDescription).toHaveBeenCalledTimes(1);
   });
+
+  it('should create a new task', async () => {
+    const newTask: Partial<ToDoInterface> = {
+      id: '660582094ad12d1d472c5960',
+      body: 'New Task',
+      completed: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    jest.spyOn(toDoRepository, 'save').mockResolvedValueOnce(newTask as ToDoInterface);
+
+    const createdTask = await toDoService.create(newTask);
+
+    expect(toDoRepository.save).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.save).toHaveBeenCalledWith(newTask);
+
+    expect(createdTask).toEqual(newTask);
+  });
+
+  it('should get total count of pending and completed tasks', async () => {
+    const mockCounts = {
+      pending: 5,
+      completed: 10,
+    };
+
+    jest.spyOn(toDoRepository, 'countPending').mockResolvedValueOnce(mockCounts.pending);
+    jest.spyOn(toDoRepository, 'countCompleted').mockResolvedValueOnce(mockCounts.completed);
+
+    const result = await toDoService.getTodoCount();
+
+    expect(result).toEqual(mockCounts);
+    expect(toDoRepository.countPending).toHaveBeenCalledTimes(1);
+    expect(toDoRepository.countCompleted).toHaveBeenCalledTimes(1);
+  });
 });
