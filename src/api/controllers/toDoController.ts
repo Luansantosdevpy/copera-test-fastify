@@ -1,4 +1,4 @@
-import { FastifyRequest, FastifyReply, RouteGenericInterface, RawServerDefault, FastifySchema, FastifyTypeProviderDefault, FastifyBaseLogger } from 'fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
 import { HttpStatusCode } from 'axios';
 import Logger from '../../infrastructure/log/logger';
 import ValidationError from '../../application/exceptions/validationError';
@@ -8,6 +8,7 @@ import ToDoService from '../../application/services/toDoService';
 import { inject, injectable } from 'tsyringe';
 import UnprocessableEntityError from '../../application/exceptions/UnprocessableEntityError';
 import { Server } from 'socket.io';
+import ErrorHandler from '../handlers/errorHandler';
 
 @injectable()
 export default class ToDoController {
@@ -35,10 +36,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.Ok).send({ data: toDos });
     } catch (error) {
-      Logger.error(`ToDoController - findAll - error: ${error}`);
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -59,17 +57,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.Created).send({ data: toDo });
     } catch (error) {
-      Logger.error(`ToDoController - create - error: ${error}`);
-      if (error instanceof ValidationError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -85,16 +73,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.Ok).send({ data: toDo });
     } catch (error) {
-      Logger.error(`ToDoController - find - error: ${error}`);
-
-      if (error instanceof NotFoundError) {
-        reply.code(HttpStatusCode.NotFound).send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -114,23 +93,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
-      Logger.error(`ToDoController - update - error: ${error}`);
-
-      if (error instanceof NotFoundError) {
-        reply.code(HttpStatusCode.NotFound).send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof ValidationError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -152,30 +115,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
-      Logger.error(`ToDoController - updateStatus - error: ${error}`);
-
-      if (error instanceof NotFoundError) {
-        reply.code(HttpStatusCode.NotFound).send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof UnprocessableEntityError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof ValidationError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -194,21 +134,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
-      Logger.error(`ToDoController - delete - error: ${error}`);
-
-      if (error instanceof NotFoundError) {
-        reply.code(HttpStatusCode.NotFound).send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof UnprocessableEntityError) {
-        reply.code(HttpStatusCode.UnprocessableEntity).send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -229,24 +155,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
-      Logger.error(`ToDoController - completeInBatch - error: ${error}`);
-      if (error instanceof ValidationError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof NotFoundError) {
-        reply
-          .code(HttpStatusCode.NotFound)
-          .send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -267,24 +176,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.NoContent).send();
     } catch (error) {
-      Logger.error(`ToDoController - deleteInBatch - error: ${error}`);
-      if (error instanceof ValidationError) {
-        reply
-          .code(HttpStatusCode.UnprocessableEntity)
-          .send({ error: error.message });
-        return;
-      }
-
-      if (error instanceof NotFoundError) {
-        reply
-          .code(HttpStatusCode.NotFound)
-          .send({ error: error.message });
-        return;
-      }
-
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 
@@ -300,10 +192,7 @@ export default class ToDoController {
 
       reply.code(HttpStatusCode.Ok).send({ data: { pending, completed } });
     } catch (error) {
-      Logger.error(`ToDoController - getTodoCount - error: ${error}`);
-      reply
-        .code(HttpStatusCode.InternalServerError)
-        .send({ error: 'Internal Server Error.' });
+      ErrorHandler.handle(error, reply);
     }
   };
 }
