@@ -231,6 +231,14 @@ export default class ToDoController {
           .send({ error: error.message });
         return;
       }
+
+      if (error instanceof NotFoundError) {
+        reply
+          .code(HttpStatusCode.NotFound)
+          .send({ error: error.message });
+        return;
+      }
+
       reply
         .code(HttpStatusCode.InternalServerError)
         .send({ error: 'Internal Server Error.' });
@@ -261,6 +269,14 @@ export default class ToDoController {
           .send({ error: error.message });
         return;
       }
+
+      if (error instanceof NotFoundError) {
+        reply
+          .code(HttpStatusCode.NotFound)
+          .send({ error: error.message });
+        return;
+      }
+
       reply
         .code(HttpStatusCode.InternalServerError)
         .send({ error: 'Internal Server Error.' });
