@@ -201,6 +201,11 @@ export default class ToDoController {
         return;
       }
 
+      if (error instanceof UnprocessableEntityError) {
+        reply.code(HttpStatusCode.UnprocessableEntity).send({ error: error.message });
+        return;
+      }
+
       reply
         .code(HttpStatusCode.InternalServerError)
         .send({ error: 'Internal Server Error.' });
